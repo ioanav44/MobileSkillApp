@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  firstName        String
+  lastName         String
+  password         String
+  cvText           String?
+  skills           UserSkill[]
+  niche            String?
+  selectedCareerId Int?
+  profileImage     String?
+  savedCourses     Course[] // Many-to-many relationship
+  createdAt        DateTime @default(now())
+}
+
+model Skill {
+  id     Int         @id @default(autoincrement())
+  name   String      @unique
+  users  UserSkill[]
+}
+
+model UserSkill {
+  id        Int    @id @default(autoincrement())
+  userId    Int
+  skillId   Int
+  level     String @default("Intermediate") // Beginner, Intermediate, Advanced
+  
+  // Scouring components (0-100 scale)
+  cvScore   Int    @default(30) // Points from CV analysis
+  selfScore Int    @default(50) // Points from self-assessment
+  quizScore Int    @default(0)  // Points from technical quiz
+  
+  user      User   @relation(fields: [userId], references: [id])
+  skill     Skill  @relation(fields: [skillId], references: [id])
+
+  @@unique([userId, skillId])
+}
+
+model Career {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String
+  skillsRequired String // Comma separated list of required skills
+  roadmapUrl  String?  // URL to roadmap.sh JSON or similar
+  questions   QuizQuestion[]
+}
+
+model QuizQuestion {
+  id        Int      @id @default(autoincrement())
+  careerId  Int
+  text      String
+  options   String   // JSON string of options ["A", "B", "C"]
+  correctIdx Int     // Index of the correct option
+  career    Career   @relation(fields: [careerId], references: [id])
+}
+
+model UserQuizResult {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  careerId  Int
+  score     Int      // Score in percentage (0-100)
+  createdAt DateTime @default(now())
+}
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  title       String
+  platform    String   // Udemy, Cursera, etc.
+  link        String
+  category    String   // The skill it covers
+  users       User[]   // Many-to-many relationship
+}
+
+model MarketTrend {
+  id              Int      @id @default(autoincrement())
+  domain          String   @unique
+  topSkills       String
+  avgSalaryMin    Float?
+  avgSalaryMax    Float?
+  avgSalaryEntry  Float?
+  avgSalaryMid    Float?
+  avgSalarySenior Float?
+  currency        String   @default("RON")
+  demandLevel     String
+  jobCount        Int      @default(0)
+  growthPercent   Int      @default(0)
+  source          String   @default("Industry Report 2024")
+  lastUpdated     DateTime @default(now())
+}
+
+model RoadmapDetail {
+  id              Int      @id @default(autoincrement())
+  title           String   @unique
+  description     String
+  freeResources   String   // JSON string
+  premiumResources String  // JSON string
+  createdAt       DateTime @default(now())
+}
+
+model CourseRecommendationCache {
+  id          Int      @id @default(autoincrement())
+  cacheKey    String   @unique // Format: "CareerName|sorted,missing,skills"
+  coursesJson String   // JSON string
+  createdAt   DateTime @default(now())
+}
