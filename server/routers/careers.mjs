@@ -232,29 +232,46 @@ router.post('/gap-analysis', requireAuth, async (req, res) => {
         };
 
         const userSkillsMap = {};
-        user.skills.forEach(us => {
-            userSkillsMap[us.skill.name.toLowerCase()] = us.level;
-        });
+        if (user && user.skills) {
+            user.skills.forEach(us => {
+                if (us.skill && us.skill.name) {
+                    userSkillsMap[us.skill.name.toLowerCase()] = us.level || 'Beginner';
+                }
+            });
+        }
 
         let totalScore = 0;
         const matchingSkills = [];
         const missingSkills = [];
 
-        for (const skill of requiredSkills) {
-            const userLevel = userSkillsMap[skill.toLowerCase()];
-            if (userLevel) {
-                matchingSkills.push(skill);
-                totalScore += levelWeights[userLevel] || 0.8;
-            } else {
-                missingSkills.push(skill);
+        if (requiredSkills && Array.isArray(requiredSkills)) {
+            for (const skill of requiredSkills) {
+                if (!skill) continue;
+                const skillLabel = String(skill);
+                const userLevel = userSkillsMap[skillLabel.toLowerCase()];
+                if (userLevel) {
+                    matchingSkills.push(skillLabel);
+                    totalScore += levelWeights[userLevel] || 0.8;
+                } else {
+                    missingSkills.push(skillLabel);
+                }
             }
         }
 
-        const percentMatch = requiredSkills.length > 0
+        // Sortăm: Advanced > Intermediate > Beginner
+        const levelOrder = { 'Advanced': 3, 'Intermediate': 2, 'Beginner': 1 };
+        matchingSkills.sort((a, b) => {
+            const lA = levelOrder[userSkillsMap[a.toLowerCase()]] || 0;
+            const lB = levelOrder[userSkillsMap[b.toLowerCase()]] || 0;
+            return lB - lA;
+        });
+
+        const percentMatch = (requiredSkills && requiredSkills.length > 0)
             ? Math.round((totalScore / requiredSkills.length) * 100)
             : 0;
 
         const userSkillNames = Object.keys(userSkillsMap);
+
 
 
         // 4. Generăm un Roadmap dinamic foarte curat

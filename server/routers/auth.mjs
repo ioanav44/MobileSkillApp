@@ -97,7 +97,7 @@ router.post('/login', async (req, res) => {
 
         const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
-        res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName } });
+        res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, selectedCareerId: user.selectedCareerId } });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Eroare la autentificare.' });

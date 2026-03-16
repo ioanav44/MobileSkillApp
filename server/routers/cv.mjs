@@ -20,7 +20,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Listă extinsă de competențe tehnice (Master List)
 const KNOWN_SKILLS = [
-    'JavaScript', 'Python', 'Java', 'C++', 'C#', 'SQL', 'TypeScript', 'PHP', 'Swift', 'Kotlin', 'Rust', 'Dart', 'Scala', 'Assembly', 'MATLAB', 'Go', 'Ruby',
+    'C', 'JavaScript', 'Python', 'Java', 'C++', 'C#', 'SQL', 'TypeScript', 'PHP', 'Swift', 'Kotlin', 'Rust', 'Dart', 'Scala', 'Assembly', 'MATLAB', 'Go', 'Ruby',
     'React', 'Node.js', 'Express', 'Angular', 'Vue.js', 'Next.js', 'Nuxt.js', 'Laravel', 'Spring Boot', 'Django', 'Flask', 'FastAPI', 'React Native', 'Flutter', 'Redux', 'Tailwind', 'Bootstrap', 'Svelte', 'NestJS', 'AdonisJS',
     'Electron', 'Unity', 'Unreal Engine', 'TensorFlow', 'PyTorch', 'OpenCV', 'Pandas', 'NumPy', 'Scikit-learn', 'Keras', 'Spacy', 'HuggingFace',
     'HTML', 'CSS', 'Sass', 'Less', 'Figma',
@@ -33,7 +33,8 @@ const KNOWN_SKILLS = [
 const isValidSkillFormat = (label) => {
     if (!label) return false;
     const lower = label.toLowerCase().trim();
-    if (lower.length < 2 || lower.length > 35) return false;
+    // Permitem lungime 1 special pentru "C" sau alte limbaje/tehnologii foarte scurte
+    if (lower.length < 1 || lower.length > 35) return false;
     // Nu acceptăm propoziții
     if (label.split(' ').length > 4) return false;
     // Nu acceptăm întrebări sau caractere dubioase
@@ -300,6 +301,26 @@ router.delete('/reset', requireAuth, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Eroare la resetarea profilului.' });
+    }
+});
+
+// --- Ștergere skill specific ---
+router.delete('/skill/:name', requireAuth, async (req, res) => {
+    try {
+        const { name } = req.params;
+        const userId = req.userId;
+
+        const skillRec = await prisma.skill.findUnique({ where: { name } });
+        if (!skillRec) return res.status(404).json({ error: 'Skill-ul nu există.' });
+
+        await prisma.userSkill.deleteMany({
+            where: { userId, skillId: skillRec.id }
+        });
+
+        res.json({ success: true, message: 'Skill șters cu succes.' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Eroare la ștergerea competenței.' });
     }
 });
 
