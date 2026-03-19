@@ -1,7 +1,12 @@
 node_modules/
+**/node_modules/
 .env
+**/ .env
 .expo/
+**/ .expo/
 dist/
+**/dist/
 server/db.sqlite
 client/web-build/
 *.log
+.DS_Store
