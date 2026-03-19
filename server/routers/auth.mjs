@@ -150,4 +150,51 @@ router.post('/update-profile-image', requireAuth, async (req, res) => {
     }
 });
 
+// --- Actualizare Date Personale ---
+router.post('/update-profile', requireAuth, async (req, res) => {
+    try {
+        const { firstName, lastName, email, newPassword, currentPassword } = req.body;
+        
+        const user = await prisma.user.findUnique({ where: { id: req.userId } });
+        if (!user) return res.status(404).json({ error: 'Utilizator negăsit.' });
+
+        // Dacă se schimbă email sau parolă, verificăm parola curentă
+        const isSensitiveChange = (email && email !== user.email) || newPassword;
+        
+        if (isSensitiveChange) {
+            if (!currentPassword) {
+                return res.status(400).json({ error: 'Te rugăm să introduci parola curentă pentru a confirma modificările sensibile.' });
+            }
+            const isMatch = await bcrypt.compare(currentPassword, user.password);
+            if (!isMatch) {
+                return res.status(401).json({ error: 'Parola curentă este incorectă.' });
+            }
+        }
+
+        const updateData = { firstName, lastName };
+        
+        if (email && email !== user.email) {
+            const existing = await prisma.user.findUnique({ where: { email } });
+            if (existing) return res.status(400).json({ error: 'Acest email este deja utilizat.' });
+            updateData.email = email;
+        }
+
+        if (newPassword) {
+            if (newPassword.length < 6) return res.status(400).json({ error: 'Noua parolă trebuie să aibă cel puțin 6 caractere.' });
+            updateData.password = await bcrypt.hash(newPassword, 10);
+        }
+
+        const updatedUser = await prisma.user.update({
+            where: { id: req.userId },
+            data: updateData,
+            select: { id: true, email: true, firstName: true, lastName: true, profileImage: true, selectedCareerId: true }
+        });
+        
+        res.json({ success: true, user: updatedUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Eroare la actualizarea datelor' });
+    }
+});
+
 export default router;
