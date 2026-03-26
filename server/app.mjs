@@ -8,7 +8,7 @@ import authRouter from './routers/auth.mjs';
 import cvRouter from './routers/cv.mjs';
 import careerRouter from './routers/careers.mjs';
 import marketTrendsRouter from './routers/marketTrends.mjs';
-import quizRouter from './routers/quiz.mjs';
+import scheduleRouter from './routers/schedule.mjs';
 console.log("-> App.mjs: Rutere incarcate.");
 
 const app = express();
@@ -23,7 +23,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/cv', cvRouter);
 app.use('/api/careers', careerRouter);
 app.use('/api/market-trends', marketTrendsRouter);
-app.use('/api/quiz', quizRouter);
+app.use('/api/schedule', scheduleRouter);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend is running' });

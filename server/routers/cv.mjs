@@ -276,6 +276,21 @@ router.post('/add-skill', requireAuth, async (req, res) => {
             }
         });
 
+        // Auto-log activitate pentru streak
+        try {
+            await prisma.learningActivity.create({
+                data: {
+                    userId,
+                    type: 'skill_added',
+                    description: `Skill adăugat: ${skillRecord.name}`
+                }
+            });
+            await prisma.user.update({
+                where: { id: userId },
+                data: { lastActivityDate: new Date() }
+            });
+        } catch (e) { /* ignorăm erori de logging */ }
+
         res.json({ success: true, skill: { name: skillRecord.name, level: level || 'Intermediate' } });
     } catch (error) {
         console.error(error);

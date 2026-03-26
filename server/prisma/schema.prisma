@@ -22,7 +22,32 @@ model User {
   selectedCareerId Int?
   profileImage     String?
   savedCourses     Course[] // Many-to-many relationship
+  currentStreak    Int      @default(0)
+  longestStreak    Int      @default(0)
+  lastActivityDate DateTime?
+  pushToken        String?
+  learningSchedule LearningSchedule?
   createdAt        DateTime @default(now())
+}
+
+model LearningSchedule {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @unique
+  frequency       String   @default("daily") // "daily", "every_2_days", "every_3_days", "weekly"
+  reminderHour    Int      @default(19)
+  reminderMinute  Int      @default(0)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model LearningActivity {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  type        String   // "quiz_completed", "skill_added", "skill_learned", "roadmap_viewed"
+  description String?
+  date        DateTime @default(now())
 }
 
 model Skill {
@@ -113,5 +138,13 @@ model CourseRecommendationCache {
   id          Int      @id @default(autoincrement())
   cacheKey    String   @unique // Format: "CareerName|sorted,missing,skills"
   coursesJson String   // JSON string
+  createdAt   DateTime @default(now())
+}
+
+model ChatCache {
+  id          Int      @id @default(autoincrement())
+  questionKey String   @unique // Normalized question text (lowercase, trimmed)
+  careerId    String   // Career context
+  response    String   // Cached AI response
   createdAt   DateTime @default(now())
 }

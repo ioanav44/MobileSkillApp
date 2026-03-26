@@ -142,13 +142,205 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
-// Chat AI personalizat via Gemini (Conversație)
+// ==========================================
+// RĂSPUNSURI PREDEFINITE (0 tokeni consumați)
+// ==========================================
+const PREDEFINED_RESPONSES = {
+    // Salutări
+    'salut': 'Salut! Sunt asistentul tău de carieră IT. Te pot ajuta cu sfaturi despre tehnologii, parcursuri de învățare sau orientare profesională. Ce te interesează?',
+    'buna': 'Bună! Cu ce te pot ajuta astăzi în legătură cu cariera ta în IT?',
+    'hello': 'Hello! Sunt aici să te ajut cu orientarea ta profesională în domeniul IT. Ce întrebări ai?',
+    'hey': 'Hey! Sunt asistentul tău de carieră. Întreabă-mă orice legat de tehnologii, skill-uri sau parcursuri profesionale.',
+    'hi': 'Hi! Cu ce te pot ajuta în legătură cu parcursul tău profesional în IT?',
+    'ce faci': 'Sunt bine, mulțumesc! Sunt gata să te ajut cu orice întrebare legată de cariera ta în IT.',
+    'cine esti': 'Sunt un asistent virtual de carieră IT, integrat în aplicația MobileSkillApp. Te pot ajuta cu sfaturi personalizate despre tehnologii, parcursuri de învățare și orientare profesională.',
+    
+    // Întrebări generale despre carieră
+    'ce limbaje sa invat': 'Depinde de direcția ta. Pentru Frontend: JavaScript/TypeScript sunt esențiale. Pentru Backend: Node.js, Python sau Java sunt foarte căutate. Pentru Mobile: Kotlin (Android) sau Swift (iOS), sau React Native/Flutter pentru cross-platform. Recomandarea mea: începe cu JavaScript, este versatil și cerut pe piață.',
+    'ce framework sa invat': 'Cele mai cerute framework-uri în 2024-2025 sunt: React (frontend web), Next.js (fullstack), React Native sau Flutter (mobile), Express/NestJS (backend Node.js), Spring Boot (backend Java). Alege în funcție de cariera pe care o vizezi.',
+    'cum sa fac un cv': 'Un CV bun în IT trebuie să conțină: 1) Datele de contact și un link GitHub/LinkedIn. 2) Skill-urile tehnice grupate pe categorii. 3) Proiectele personale cu descrieri scurte și link-uri. 4) Experiența profesională (dacă există). 5) Educația. Păstrează CV-ul pe maxim 2 pagini și adaptează-l pentru fiecare job.',
+    'cum sa ma pregatesc de interviu': 'Pentru un interviu tehnic: 1) Exersează probleme pe LeetCode/HackerRank. 2) Revizuiește conceptele fundamentale (structuri de date, algoritmi). 3) Pregătește-te să explici proiectele tale. 4) Studiază compania și produsele lor. 5) Pregătește întrebări pentru intervievator. 6) Fă mock interviews cu prieteni sau pe platforme online.',
+    'cat castiga un programator': 'Salariile variază mult în funcție de nivel și tehnologie. În România (2024-2025): Junior: 3.000-6.000 RON net, Mid-level: 6.000-12.000 RON net, Senior: 12.000-20.000+ RON net. Domeniile cele mai bine plătite sunt: Cloud/DevOps, AI/ML, și Full-Stack Development.',
+    
+    // Cursuri și resurse de învățare
+    'cursuri': 'Cele mai bune platforme pentru cursuri IT sunt: 1) Udemy - cursuri practice și accesibile. 2) Coursera - cursuri universitare certificate. 3) freeCodeCamp - complet gratuit. 4) YouTube - tutoriale gratuite de calitate. 5) Pluralsight - pentru profesioniști. Recomandarea mea: începe cu resurse gratuite, apoi investește în cursuri Udemy la reduceri.',
+    'ce cursuri sa fac': 'Depinde de direcția ta: Pentru Web Development recomand "The Web Developer Bootcamp" (Udemy). Pentru React: cursurile lui Maximilian Schwarzmüller. Pentru Python: "100 Days of Code" de Angela Yu. Pentru baze de date: "The Complete SQL Bootcamp". Vizitează secțiunea de Roadmap din aplicație pentru recomandări personalizate!',
+    'recomanda cursuri': 'Îți recomand să verifici secțiunea de Roadmap din aplicație - acolo vei găsi resurse personalizate pe baza skill-urilor tale. Platforme de top: Udemy (cursuri practice), Coursera (certificate universitare), freeCodeCamp (gratuit), și YouTube pentru tutoriale rapide.',
+    'resurse': 'Resurse gratuite de top: 1) freeCodeCamp.org - curriculum complet de web dev. 2) The Odin Project - parcurs complet full-stack. 3) MDN Web Docs - referință web. 4) JavaScript.info - ghid JS modern. 5) YouTube (Traversy Media, Net Ninja, Fireship). Verifică și secțiunea de Roadmap din aplicație!',
+    'de unde sa invat': 'Poți învăța gratuit de pe: freeCodeCamp, The Odin Project, MDN Web Docs, YouTube (Traversy Media, Net Ninja). Pentru cursuri plătite: Udemy (așteptă reducerile la 10-15€), Coursera, și Pluralsight. Cel mai important: practică zilnic și construiește proiecte reale!',
+    
+    // Sfaturi pentru începători
+    'sunt incepator': 'Bine ai venit în lumea IT! Îți recomand să începi cu: 1) HTML + CSS (2-3 săptămâni). 2) JavaScript basics (1-2 luni). 3) Un framework (React, sau React Native pentru mobile). 4) Git pentru control versiuni. Cel mai important: codează zilnic, chiar și 30 de minute, și construiește proiecte mici.',
+    'de unde sa incep': 'Începe cu fundamentele: 1) Învață HTML și CSS pentru structura web. 2) Treci la JavaScript pentru logică. 3) Alege o direcție (Frontend, Backend sau Mobile). 4) Învață un framework popular (React, Node.js, etc). 5) Construiește proiecte și pune-le pe GitHub. Folosește roadmap-ul din aplicație pentru un parcurs structurat!',
+    'ce sa invat primul': 'Ordinea recomandată: 1) HTML + CSS (baza web-ului). 2) JavaScript (limbajul esențial). 3) Git & GitHub (controlul versiunilor). 4) Un framework (React pentru frontend, Node.js pentru backend). 5) O bază de date (SQL sau MongoDB). Roadmap-ul din aplicație te poate ghida pas cu pas!',
+    
+    // Cariere specifice
+    'frontend developer': 'Pentru Frontend Developer ai nevoie de: HTML, CSS, JavaScript, un framework (React/Vue/Angular), responsive design, Git, și cunoștințe de UI/UX. Salariu mediu în România: 5.000-15.000 RON net. Este una dintre cele mai accesibile cariere pentru începători.',
+    'backend developer': 'Pentru Backend Developer ai nevoie de: un limbaj server (Node.js, Python, Java), baze de date (SQL + NoSQL), API-uri REST, autentificare/securitate, și cunoștințe de server/deploy. Salariu mediu în România: 6.000-18.000 RON net.',
+    'fullstack developer': 'Full-Stack Developer combină frontend + backend. Ai nevoie de: HTML/CSS/JS, un framework frontend (React), un framework backend (Node.js/Express), baze de date, Git, și deploy basics. Este cel mai versatil rol, foarte cerut pe piață.',
+    'mobile developer': 'Pentru Mobile Developer: React Native sau Flutter pentru cross-platform, sau Swift (iOS) / Kotlin (Android) pentru nativ. Ai nevoie și de: API integration, state management, și UI/UX mobile. Piața mobilă este în continuă creștere!',
+    'devops engineer': 'DevOps Engineer necesită: Linux, Docker, Kubernetes, CI/CD (GitHub Actions/Jenkins), cloud (AWS/Azure/GCP), scripting (Bash/Python), monitoring, și Infrastructure as Code (Terraform). Este una dintre cele mai bine plătite specializări IT.',
+    
+    // Portofoliu și proiecte
+    'portofoliu': 'Un portofoliu bun trebuie să conțină: 1) 3-5 proiecte variate care demonstrează skill-uri diferite. 2) Cod curat pe GitHub cu README-uri detaliate. 3) Un site personal cu prezentarea proiectelor. 4) Link-uri live funcționale. Calitatea bate cantitatea - un proiect bine făcut valorează mai mult decât 10 proiecte simple.',
+    'ce proiecte sa fac': 'Proiecte recomandate: 1) Un to-do list (basics). 2) O aplicație de vreme cu API extern. 3) Un blog/portfolio personal. 4) Un clone al unei aplicații cunoscute (Twitter, Spotify). 5) O aplicație full-stack cu autentificare. Pune tot pe GitHub și documentează bine!',
+    
+    // Piața muncii
+    'cum sa gasesc un job': 'Pași pentru a găsi un job în IT: 1) Construiește un portofoliu solid pe GitHub. 2) Optimizează-ți profilul LinkedIn. 3) Aplică pe: LinkedIn, BestJobs, eJobs, Hipo.ro. 4) Participă la meetup-uri și hackathoane. 5) Exersează interviuri tehnice pe LeetCode. 6) Nu te descuraja de respingeri - persistența contează!',
+    'linkedin': 'Pentru un profil LinkedIn bun: 1) Adaugă o poză profesională. 2) Scrie un headline clar (ex: "Junior Frontend Developer | React | JavaScript"). 3) Detaliază proiectele în secțiunea Experience. 4) Adaugă skill-uri și cere endorsements. 5) Postează conținut tehnic regulat. 6) Conectează-te cu recruiteri din domeniu.',
+    
+    // Freelancing
+    'freelancing': 'Pentru freelancing în IT: 1) Construiește mai întâi experiență (6-12 luni). 2) Creează un portofoliu impresionant. 3) Începe pe platforme ca Upwork, Fiverr, sau Toptal. 4) Setează-ți prețuri competitive la început. 5) Construiește relații pe termen lung cu clienții. Avantaje: flexibilitate și venituri potențial mai mari.',
+    
+    // Ajutor aplicație
+    'cum functioneaza aplicatia': 'MobileSkillApp te ajută în 4 pași: 1) Încarcă-ți CV-ul pentru analiză automată cu AI. 2) Alege o carieră țintă și vizualizează roadmap-ul de competențe. 3) Evaluează-ți nivelul prin self-assessment și quiz-uri tehnice. 4) Urmărește tendințele pieței IT. Eu, asistentul AI, sunt aici să te ghidez pe tot parcursul!',
+    'ajutor': 'Te pot ajuta cu: 1) Informații despre tehnologii (întreabă "ce este React?"). 2) Sfaturi de carieră (întreabă "cum să găsesc un job?"). 3) Recomandări de cursuri (întreabă "ce cursuri să fac?"). 4) Ghidare pentru începători (întreabă "de unde să încep?"). 5) Informații despre salarii și piața muncii. Întreabă orice!',
+    
+    // Frontend
+    'ce este react': 'React este o bibliotecă JavaScript dezvoltată de Meta (Facebook) pentru construirea interfețelor utilizator. Se bazează pe componente reutilizabile și un Virtual DOM eficient. Este cel mai popular framework frontend, cu o comunitate vastă și multe resurse de învățare.',
+    'ce este angular': 'Angular este un framework TypeScript dezvoltat de Google pentru aplicații web de tip SPA (Single Page Application). Oferă o arhitectură completă cu routing, forms, HTTP client și dependency injection incluse. Este foarte utilizat în mediul enterprise.',
+    'ce este vue': 'Vue.js este un framework JavaScript progresiv pentru interfețe web. Este apreciat pentru curba de învățare ușoară, documentația excelentă și flexibilitatea sa. Combină cele mai bune idei din React și Angular.',
+    
+    // Backend
+    'ce este node.js': 'Node.js este un mediu de execuție JavaScript pe server, construit pe motorul V8 al Chrome. Permite dezvoltarea de aplicații backend rapide și scalabile. Este ideal pentru aplicații real-time, API-uri REST și microservicii.',
+    'ce este express': 'Express.js este cel mai popular framework web pentru Node.js. Oferă o sintaxă minimalistă pentru crearea de servere HTTP, routing, middleware și API-uri REST. Este baza multor aplicații web moderne.',
+    'ce este python': 'Python este un limbaj de programare versatil, cunoscut pentru sintaxa clară și lizibilă. Este foarte folosit în: dezvoltare web (Django, Flask), data science, machine learning, automatizare și scripting.',
+    
+    // Baze de date
+    'ce este sql': 'SQL (Structured Query Language) este limbajul standard pentru interacțiunea cu bazele de date relaționale. Permite crearea, citirea, actualizarea și ștergerea datelor. Cele mai populare baze de date SQL sunt: PostgreSQL, MySQL și SQLite.',
+    'ce este mongodb': 'MongoDB este o bază de date NoSQL orientată pe documente. Salvează datele în format JSON-like (BSON), oferind flexibilitate în structura datelor. Este foarte populară în stiva MERN (MongoDB, Express, React, Node.js).',
+    
+    // DevOps
+    'ce este docker': 'Docker este o platformă de containerizare care permite împachetarea aplicațiilor împreună cu toate dependențele lor. Containerele Docker asigură că aplicația rulează identic pe orice mediu (development, testing, production).',
+    'ce este git': 'Git este cel mai folosit sistem de control al versiunilor. Permite urmărirea modificărilor în cod, colaborarea în echipă și gestionarea ramurilor de dezvoltare. GitHub și GitLab sunt platforme populare bazate pe Git.',
+    
+    // Mulțumiri / Închidere
+    'multumesc': 'Cu plăcere! Dacă mai ai întrebări despre cariera ta în IT, nu ezita să mă întrebi.',
+    'mersi': 'Cu drag! Sunt aici oricând ai nevoie de sfaturi legate de cariera ta.',
+    'pa': 'La revedere! Succes în parcursul tău profesional! 🚀',
+    'la revedere': 'La revedere! Îți doresc mult succes în cariera ta IT!'
+};
+
+// Funcție pentru normalizarea textului (pentru cache și matching)
+const normalizeQuestion = (text) => {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[?!.,;:'"]/g, '')       // eliminăm punctuația
+        .replace(/\s+/g, ' ')              // normalizăm spațiile
+        .replace(/ă/g, 'a').replace(/â/g, 'a').replace(/î/g, 'i')
+        .replace(/ș/g, 's').replace(/ț/g, 't'); // normalizăm diacriticele
+};
+
+// ==========================================
+// MATCHING PE CUVINTE CHEIE / SUBIECTE
+// ==========================================
+// Dacă cineva menționează „react" în orice formă, returnăm info despre React
+const TOPIC_RESPONSES = {
+    'react': 'React este o bibliotecă JavaScript dezvoltată de Meta (Facebook) pentru construirea interfețelor utilizator. Se bazează pe componente reutilizabile și un Virtual DOM eficient. Este cel mai popular framework frontend, cu o comunitate vastă și foarte cerut pe piața muncii.',
+    'angular': 'Angular este un framework TypeScript dezvoltat de Google pentru aplicații web de tip SPA. Oferă o arhitectură completă cu routing, forms, HTTP client și dependency injection incluse. Este foarte utilizat în mediul enterprise.',
+    'vue': 'Vue.js este un framework JavaScript progresiv pentru interfețe web. Este apreciat pentru curba de învățare ușoară, documentația excelentă și flexibilitatea sa.',
+    'node': 'Node.js este un mediu de execuție JavaScript pe server, construit pe motorul V8 al Chrome. Permite dezvoltarea de aplicații backend rapide și scalabile, fiind ideal pentru API-uri REST și microservicii.',
+    'express': 'Express.js este cel mai popular framework web pentru Node.js. Oferă o sintaxă minimalistă pentru routing, middleware și API-uri REST. Este baza multor aplicații web moderne.',
+    'python': 'Python este un limbaj de programare versatil, folosit în dezvoltare web (Django, Flask), data science, machine learning, automatizare și scripting. Are o sintaxă clară și o comunitate imensă.',
+    'java': 'Java este un limbaj de programare orientat pe obiecte, foarte folosit în aplicații enterprise, Android development și sisteme backend. Este cunoscut pentru portabilitate și ecosistemul vast (Spring Boot, Maven).',
+    'javascript': 'JavaScript este limbajul principal al web-ului. Rulează atât în browser (frontend) cât și pe server (Node.js). Este esențial pentru orice dezvoltator web și are un ecosistem enorm de framework-uri și librării.',
+    'typescript': 'TypeScript este un superset al JavaScript-ului care adaugă tipizare statică. Previne multe erori de cod înainte de runtime și este foarte popular în proiecte mari. Este folosit de Angular, și tot mai mult cu React și Node.js.',
+    'sql': 'SQL (Structured Query Language) este limbajul standard pentru bazele de date relaționale. Permite crearea, citirea, actualizarea și ștergerea datelor. Cele mai populare baze de date SQL sunt: PostgreSQL, MySQL și SQLite.',
+    'mongodb': 'MongoDB este o bază de date NoSQL orientată pe documente. Salvează datele în format JSON-like, oferind flexibilitate în structura datelor. Este populară în stiva MERN (MongoDB, Express, React, Node.js).',
+    'docker': 'Docker este o platformă de containerizare care permite împachetarea aplicațiilor cu toate dependențele lor. Asigură că aplicația rulează identic pe orice mediu (dev, testing, production).',
+    'git': 'Git este cel mai folosit sistem de control al versiunilor. Permite urmărirea modificărilor, colaborarea în echipă și gestionarea ramurilor de dezvoltare. GitHub și GitLab sunt platforme populare bazate pe Git.',
+    'kubernetes': 'Kubernetes (K8s) este o platformă open-source pentru orchestrarea containerelor Docker la scară mare. Automatizează deployment-ul, scalarea și gestionarea aplicațiilor containerizate.',
+    'flutter': 'Flutter este un framework de la Google pentru dezvoltarea de aplicații mobile cross-platform (iOS + Android) dintr-un singur cod sursă. Folosește limbajul Dart și oferă performanță nativă.',
+    'react native': 'React Native este un framework de la Meta pentru aplicații mobile cross-platform folosind JavaScript/React. Permite reutilizarea logicii între iOS și Android, cu performanță apropiată de nativ.',
+    'next': 'Next.js este un framework React pentru aplicații web fullstack. Oferă server-side rendering, generare statică, routing bazat pe fișiere și API routes integrate. Este foarte popular în producție.',
+    'css': 'CSS (Cascading Style Sheets) este limbajul pentru stilizarea paginilor web. Definește layout-ul, culorile, fonturile și animațiile. Tehnologii moderne includ Flexbox, Grid, și preprocesoare ca Sass.',
+    'html': 'HTML (HyperText Markup Language) este limbajul de bază al web-ului, folosit pentru structurarea conținutului paginilor. Este primul lucru pe care trebuie să-l înveți pentru dezvoltare web.',
+    'tailwind': 'Tailwind CSS este un framework CSS utility-first care permite stilizarea directă în HTML prin clase predefinite. Accelerează dezvoltarea UI și oferă un design consistent.',
+    'prisma': 'Prisma este un ORM modern pentru Node.js și TypeScript. Simplifica interacțiunea cu baza de date prin tipizare automată, migrări și un query builder intuitiv. Suportă PostgreSQL, MySQL, SQLite și MongoDB.',
+    'firebase': 'Firebase este o platformă de la Google care oferă backend-as-a-service: autentificare, baze de date real-time (Firestore), hosting, cloud functions și notificări push. Ideal pentru prototipare rapidă.',
+    'aws': 'AWS (Amazon Web Services) este cea mai mare platformă de cloud computing. Oferă sute de servicii: EC2 (servere), S3 (stocare), Lambda (serverless), RDS (baze de date) și multe altele.',
+    'linux': 'Linux este un sistem de operare open-source esențial pentru orice developer. Majoritatea serverelor web rulează pe Linux. Comanda terminalului și Bash scripting sunt skill-uri fundamentale.',
+    'rest': 'REST (Representational State Transfer) este un stil arhitectural pentru API-uri web. Folosește metode HTTP (GET, POST, PUT, DELETE) pentru a manipula resurse. Este standardul dominant pentru comunicarea client-server.',
+    'graphql': 'GraphQL este un limbaj de interogare pentru API-uri, dezvoltat de Meta. Spre deosebire de REST, permite clientului să ceară exact datele de care are nevoie, reducând transferul inutil de date.',
+    'redis': 'Redis este o bază de date in-memory folosită ca cache, broker de mesaje și stocaj temporar. Este extrem de rapidă și foarte utilizată pentru a îmbunătăți performanța aplicațiilor.',
+    'ci/cd': 'CI/CD (Continuous Integration / Continuous Deployment) automatizează testarea și livrarea codului. Instrumente populare: GitHub Actions, Jenkins, GitLab CI. Este esențial în DevOps.',
+    'devops': 'DevOps este o cultură și un set de practici care combină dezvoltarea (Dev) cu operațiunile IT (Ops). Include CI/CD, containerizare (Docker), orchestrare (Kubernetes) și monitorizare.',
+    'machine learning': 'Machine Learning este o ramură a inteligenței artificiale care permite computerelor să învețe din date. Biblioteci populare: TensorFlow, PyTorch, scikit-learn. Python este limbajul dominant.',
+    'ai': 'Inteligența Artificială (AI) cuprinde tehnici care permit computerelor să simuleze inteligența umană: procesare de limbaj natural, viziune computerizată, machine learning. Este unul dintre cele mai căutate domenii IT.',
+    
+    // Cuvinte cheie de carieră/învățare
+    'curs': 'Cele mai bune platforme pentru cursuri IT sunt: Udemy (cursuri practice și accesibile), Coursera (certificate universitare), freeCodeCamp (complet gratuit), și YouTube. Verifică și secțiunea de Roadmap din aplicație pentru recomandări personalizate pe baza skill-urilor tale!',
+    'recomand': 'Îți recomand să verifici secțiunea de Roadmap din aplicație - acolo vei găsi resurse personalizate. Platforme de top: Udemy (practice), Coursera (certificate), freeCodeCamp (gratuit), YouTube (tutoriale rapide). Întreabă-mă despre o tehnologie specifică pentru mai multe detalii!',
+    'job': 'Pentru a găsi un job în IT: 1) Construiește un portofoliu pe GitHub. 2) Optimizează LinkedIn. 3) Aplică pe LinkedIn, BestJobs, eJobs, Hipo.ro. 4) Participă la meetup-uri. 5) Exersează pe LeetCode. Persistența contează!',
+    'salariu': 'Salarii IT în România (2024-2025): Junior: 3.000-6.000 RON net, Mid: 6.000-12.000 RON, Senior: 12.000-20.000+ RON. Cele mai bine plătite domenii: Cloud/DevOps, AI/ML, Full-Stack, și Security.',
+    'interviu': 'Pentru un interviu tehnic: 1) Exersează pe LeetCode/HackerRank. 2) Revizuiește structuri de date și algoritmi. 3) Pregătește-te să explici proiectele tale. 4) Studiază compania. 5) Fă mock interviews. Încrederea vine cu practica!',
+    'incepator': 'Bine ai venit în IT! Începe cu: 1) HTML + CSS (2-3 săptămâni). 2) JavaScript (1-2 luni). 3) Un framework (React). 4) Git. Codează zilnic, chiar și 30 min, și construiește proiecte mici. Roadmap-ul din aplicație te ghidează pas cu pas!',
+    'portofoliu': 'Un portofoliu bun: 1) 3-5 proiecte variate pe GitHub. 2) README-uri detaliate. 3) Un site personal. 4) Link-uri live funcționale. Calitatea bate cantitatea - un proiect bine făcut valorează mai mult decât 10 simple.',
+    'freelance': 'Pentru freelancing: 1) Construiește experiență (6-12 luni). 2) Portofoliu impresionant. 3) Platforme: Upwork, Fiverr, Toptal. 4) Prețuri competitive la început. 5) Relații pe termen lung cu clienții.',
+};
+
+// Funcție pentru a găsi cel mai bun răspuns predefinit
+const findPredefinedResponse = (question) => {
+    const normalized = normalizeQuestion(question);
+    
+    // 1. Căutare exactă în dicționarul principal
+    if (PREDEFINED_RESPONSES[normalized]) {
+        return PREDEFINED_RESPONSES[normalized];
+    }
+    
+    // 2. Căutare parțială – dacă întrebarea conține o frază cheie din dicționar
+    for (const [key, response] of Object.entries(PREDEFINED_RESPONSES)) {
+        const normalizedKey = normalizeQuestion(key);
+        if (normalized.includes(normalizedKey) || normalizedKey.includes(normalized)) {
+            return response;
+        }
+    }
+    
+    // 3. Căutare pe TOPIC (cuvinte cheie de tehnologii) — cea mai inteligentă
+    //    "spune-mi despre react", "vreau sa invat react", "react ce e?" → toate dau match
+    for (const [topic, response] of Object.entries(TOPIC_RESPONSES)) {
+        const normalizedTopic = normalizeQuestion(topic);
+        // Verificăm dacă cuvântul cheie apare ca un cuvânt separat în întrebare
+        const words = normalized.split(' ');
+        if (words.includes(normalizedTopic) || normalized.includes(normalizedTopic)) {
+            return response;
+        }
+    }
+    
+    return null;
+};
+
+// Chat AI personalizat via Gemini (cu cache + răspunsuri predefinite)
 router.post('/ai-chat', requireAuth, async (req, res) => {
     try {
         const { careerId, messages } = req.body;
         const userId = req.userId;
-        logToFile(`-> Chat cerut de user ${userId} pentru cariera ${careerId}`);
+        const lastUserMessage = messages[messages.length - 1].content;
+        const careerKey = careerId || 'general';
+        
+        logToFile(`-> Chat cerut de user ${userId} pentru cariera ${careerKey}`);
 
+        // ============ PASUL 1: Verifică răspunsuri predefinite (0 tokeni) ============
+        const predefinedReply = findPredefinedResponse(lastUserMessage);
+        if (predefinedReply) {
+            console.log("[PREDEFINED] Răspuns returnat din dicționar, fără consum API.");
+            return res.json({ reply: predefinedReply });
+        }
+
+        // ============ PASUL 2: Verifică cache-ul din baza de date ============
+        const cacheKey = normalizeQuestion(lastUserMessage);
+        try {
+            const cached = await prisma.chatCache.findUnique({
+                where: { questionKey: cacheKey }
+            });
+            if (cached) {
+                console.log("[CACHE] Răspuns returnat din cache, fără consum API.");
+                return res.json({ reply: cached.response });
+            }
+        } catch (e) { /* cache miss, continuăm */ }
+
+        // ============ PASUL 3: Apel Gemini API (cu context minim) ============
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: { skills: true }
@@ -157,35 +349,53 @@ router.post('/ai-chat', requireAuth, async (req, res) => {
         if (!user) return res.status(404).json({ error: 'Utilizator negăsit' });
 
         const userSkillsList = user.skills.map(s => s.name).join(', ') || "niciunul momentan";
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        let systemContext = `Ești un consilier de carieră IT. Context: Utilizatorul are următoarele competențe extrase: [${userSkillsList}]. `;
+        let systemContext = `Ești un consilier de carieră IT. Context: Utilizatorul are competențele: [${userSkillsList}]. `;
 
-        if (careerId !== 'general' && !isNaN(parseInt(careerId))) {
-            const career = await prisma.career.findUnique({ where: { id: parseInt(careerId) } });
+        if (careerKey !== 'general' && !isNaN(parseInt(careerKey))) {
+            const career = await prisma.career.findUnique({ where: { id: parseInt(careerKey) } });
             if (career) systemContext += `Se orientează către rolul de [${career.name}]. `;
         }
 
-        systemContext += `Oferă sfaturi scurte, profesionale, în română. Fără emoji. Concentrează-te pe competențele pe care le are deja.`;
+        systemContext += `Răspunde scurt (maxim 3-4 propoziții), profesional, în română. Fără emoji.`;
 
-        const lastUserMessage = messages[messages.length - 1].content;
-        const prompt = `${systemContext}\n\nUtilizatorul întreabă: ${lastUserMessage}`;
+        // Trimitem DOAR ultimul mesaj, nu toată conversația → mai puțini tokeni
+        const prompt = `${systemContext}\n\nÎntrebare: ${lastUserMessage}`;
 
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
 
-        console.log("<- Răspuns AI trimis.");
+        // ============ PASUL 4: Salvăm răspunsul în cache ============
+        try {
+            await prisma.chatCache.create({
+                data: {
+                    questionKey: cacheKey,
+                    careerId: String(careerKey),
+                    response: responseText
+                }
+            });
+            console.log("[AI+CACHE] Răspuns generat cu AI și salvat în cache.");
+        } catch (e) {
+            // Dacă deja există (race condition), ignorăm
+            console.log("[AI] Răspuns generat cu AI (cache skip - deja exista).");
+        }
+
         res.json({ reply: responseText });
 
     } catch (error) {
         logToFile(`EROARE CHAT AI: ${error.status} - ${error.message}`);
         console.error("Eroare Gemini Chat:", error.status, error.message);
 
-        if (error.status === 429) {
-            return res.status(429).json({ error: "Limita de întrebări pe minut a fost atinsă de Google. Te rog așteaptă 30-60 secunde și încearcă iar." });
-        }
+        // În loc de eroare, returnăm un răspuns util de fallback
+        const fallbackReplies = [
+            'Momentan procesez multe cereri simultan. Între timp, îți recomand să explorezi secțiunea de Roadmap pentru a vedea parcursul tău de învățare, sau să verifici secțiunea de Tendințe pentru a descoperi ce tehnologii sunt cele mai cerute pe piață.',
+            'Sunt în pauză de procesare! Până revin, poți să îți analizezi CV-ul din secțiunea de Profil sau să parcurgi quiz-urile tehnice pentru a-ți evalua cunoștințele.',
+            'Procesez foarte multe cereri în acest moment. Te invit să explorezi roadmap-ul de carieră personalizat sau să verifici tendințele pieței IT din aplicație.',
+        ];
+        const fallbackReply = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
 
-        res.status(500).json({ error: "AI-ul este ocupat momentan. Încearcă peste câteva clipe." });
+        res.json({ reply: fallbackReply });
     }
 });
 
@@ -345,7 +555,7 @@ router.post('/gap-analysis', requireAuth, async (req, res) => {
                     recommendedCourses = JSON.parse(cachedCourses.coursesJson);
                 } else {
                     console.log(`[AI] Cache miss. Generating courses for: ${cacheKey}`);
-                    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
                     const topMissingStr = topMissingSkills.join(', ');
                     const coursePrompt = `User needs skills for ${career.name}: [${topMissingStr}]. 
                     Recommend 3 real courses (Udemy/Coursera). Return ONLY JSON array: [{"title": "Course Name", "platform": "Udemy", "link": "https://..."}]`;
@@ -986,7 +1196,7 @@ router.get('/roadmap-item-details', requireAuth, async (req, res) => {
         // 3. Nu am nimic local - apelăm AI pentru skill-uri necunoscute
         console.log(`[AI] Cache miss + no local data. Generating details for: ${title} (${careerName})`);
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const prompt = `Ești un expert educațional IT. Oferă resurse de înaltă calitate pentru conceptul "${title}" în cadrul unei cariere de ${careerName || 'Software Developer'}.
         
         CERINȚE:
