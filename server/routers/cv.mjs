@@ -2,9 +2,19 @@ import express from 'express';
 import pkg from '@prisma/client';
 import multer from 'multer';
 import fs from 'fs';
+import path from 'path';
+import { pathToFileURL, fileURLToPath } from 'url';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
-const pdf = require('pdf-parse');
+
+// pdfjs-dist (build legacy) pentru extragere text din PDF-uri, inclusiv LaTeX
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+// fileURLToPath + path.resolve pentru path-uri absolute (evita probleme cu spatii si ../ pe Windows)
+const __cvRouterDir = fileURLToPath(new URL('.', import.meta.url));
+const __serverRoot = path.resolve(__cvRouterDir, '..');  // server/ = ../ fata de routers/
+const __workerSrc = pathToFileURL(path.resolve(__serverRoot, 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')).href;
+const __standardFontDataUrl = pathToFileURL(path.resolve(__serverRoot, 'node_modules/pdfjs-dist/standard_fonts')).href + '/';
+pdfjsLib.GlobalWorkerOptions.workerSrc = __workerSrc;
 
 const { PrismaClient } = pkg;
 import { requireAuth } from '../middleware/auth.mjs';
@@ -20,13 +30,20 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Listă extinsă de competențe tehnice (Master List)
 const KNOWN_SKILLS = [
-    'C', 'JavaScript', 'Python', 'Java', 'C++', 'C#', 'SQL', 'TypeScript', 'PHP', 'Swift', 'Kotlin', 'Rust', 'Dart', 'Scala', 'Assembly', 'MATLAB', 'Go', 'Ruby',
-    'React', 'Node.js', 'Express', 'Angular', 'Vue.js', 'Next.js', 'Nuxt.js', 'Laravel', 'Spring Boot', 'Django', 'Flask', 'FastAPI', 'React Native', 'Flutter', 'Redux', 'Tailwind', 'Bootstrap', 'Svelte', 'NestJS', 'AdonisJS',
+    // Limbaje de programare
+    'C', 'C++', 'C#', 'JavaScript', 'TypeScript', 'Python', 'Java', 'SQL', 'PL/SQL', 'Bash', 'PHP', 'Swift', 'Kotlin', 'Rust', 'Dart', 'Scala', 'Assembly', 'MATLAB', 'Go', 'Ruby', 'PowerShell',
+    // Frameworks & Libraries
+    'React', 'React Native', 'Node.js', 'Express', 'Angular', 'Vue.js', 'Next.js', 'Nuxt.js', 'NestJS', 'Laravel', 'Spring Boot', 'Django', 'Flask', 'FastAPI', 'Flutter', 'Redux', 'Tailwind', 'Bootstrap', 'Svelte', 'AdonisJS', 'Expo',
+    // AI / Data Science
     'Electron', 'Unity', 'Unreal Engine', 'TensorFlow', 'PyTorch', 'OpenCV', 'Pandas', 'NumPy', 'Scikit-learn', 'Keras', 'Spacy', 'HuggingFace',
+    // Web & Design
     'HTML', 'CSS', 'Sass', 'Less', 'Figma',
+    // Cloud & DevOps
     'AWS', 'Azure', 'Google Cloud', 'GCP', 'Docker', 'Kubernetes', 'Jenkins', 'Terraform', 'CI/CD', 'Git', 'GitHub', 'GitLab', 'Firebase', 'Netlify', 'Vercel', 'Ansible', 'CircleCI', 'TravisCI',
-    'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Elasticsearch', 'Oracle', 'SQLite', 'MariaDB', 'DynamoDB', 'Cassandra', 'Neo4j', 'Snowflake', 'BigQuery',
-    'GraphQL', 'Microservices', 'Linux', '.NET', 'ASP.NET', 'Power BI', 'Tableau', 'Salesforce', 'SAP', 'Bash', 'PowerShell', 'WebSockets', 'WebRTC'
+    // Baze de date & Backend
+    'MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Elasticsearch', 'Oracle', 'SQLite', 'MariaDB', 'DynamoDB', 'Cassandra', 'Neo4j', 'Snowflake', 'BigQuery', 'Supabase',
+    // Unelte & Altele
+    'GraphQL', 'Microservices', 'Linux', '.NET', 'ASP.NET', 'Power BI', 'Tableau', 'Salesforce', 'SAP', 'WebSockets', 'WebRTC', 'Postman', 'Arduino', 'Mixly'
 ];
 
 // Helper pentru validare "Common Sense"
@@ -72,15 +89,28 @@ router.post('/upload', requireAuth, upload.single('cvFile'), async (req, res) =>
 
             let rawText = "";
             try {
-                if (typeof pdf === 'function') {
-                    const data = await pdf(buffer);
-                    rawText = data.text || "";
-                } else if (pdf && pdf.default && typeof pdf.default === 'function') {
-                    const data = await pdf.default(buffer);
-                    rawText = data.text || "";
+                // Folosim pdfjs-dist (legacy build) care suportă PDF-uri LaTeX și alte formate complexe
+                const uint8Array = new Uint8Array(buffer);
+                const loadingTask = pdfjsLib.getDocument({
+                    data: uint8Array,
+                    isEvalSupported: false,
+                    standardFontDataUrl: __standardFontDataUrl
+                });
+                const pdfDoc = await loadingTask.promise;
+                const numPages = pdfDoc.numPages;
+                const pages = [];
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    pages.push(pageText);
                 }
+                rawText = pages.join('\n');
+                logToFile(`PDF extras cu succes (pdfjs): ${rawText.length} caractere, ${numPages} pagini`);
             } catch (pdfErr) {
-                logToFile(`Eroare PDF-Parse: ${pdfErr.message}`);
+                logToFile(`Eroare pdfjs: ${pdfErr.message} - folosim fallback`);
+                // Fallback: extrage text lizibil din bytes
+                rawText = buffer.toString('latin1').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, ' ');
             }
 
             if (!rawText || rawText.length < 10) {
@@ -93,23 +123,50 @@ router.post('/upload', requireAuth, upload.single('cvFile'), async (req, res) =>
                 const found = [];
                 const lowerText = rawText.toLowerCase();
 
-                KNOWN_SKILLS.forEach(s => {
+                // Sortăm skill-urile: cele mai lungi primele, ca "C++" să fie detectat înaintea "C"
+                const sortedSkills = [...KNOWN_SKILLS].sort((a, b) => b.length - a.length);
+
+                sortedSkills.forEach(s => {
                     const escaped = s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-                    // Verificăm dacă skill-ul există în text (case-insensitive)
-                    const reg = new RegExp(`(?:^|[^a-zA-Z0-9#+.])(${escaped})(?:$|[^a-zA-Z0-9#+.])`, 'gi');
+                    // Construim un regex care să nu permită caractere alfanumerice imediat înainte/după
+                    // Folosim \b pentru skill-uri alfanumerice simple, sau delimitatori pentru cele cu simboluri
+                    let reg;
+                    if (/^[a-zA-Z0-9]+$/.test(s)) {
+                        // Skill pur alfanumeric: folosim word boundary
+                        reg = new RegExp(`\\b(${escaped})\\b`, 'gi');
+                    } else {
+                        // Skill cu caractere speciale (C++, C#, Node.js etc.): delimitatori custom
+                        reg = new RegExp(`(?:^|[^a-zA-Z0-9])(${escaped})(?=$|[^a-zA-Z0-9])`, 'gi');
+                    }
 
-                    if (reg.test(rawText)) {
-                        const isVeryShort = s.length <= 3;
-                        if (isVeryShort) {
-                            // Pt skill-uri scurte (iOS, C#, PHP) ne asigurăm că match-ul este exact (word boundary)
-                            // dar RĂMÂNEM case-insensitive ('gi') ca să prindă și "sql" și "SQL"
-                            const strictReg = new RegExp(`(?:^|[^a-zA-Z0-9#+.])(${escaped})(?:$|[^a-zA-Z0-9#+.])`, 'gi');
-                            if (!strictReg.test(rawText)) return;
+                    // Resetăm lastIndex înainte de test (important pentru flag 'g')
+                    reg.lastIndex = 0;
+                    const matchFound = reg.test(rawText);
 
-                            // Validări extra pt "Go" și "R" care sunt prea comune
-                            if (s === 'Go' && (lowerText.includes("go to") || lowerText.includes("go back") || /ongoing/i.test(lowerText))) return;
-                            if (s === 'R' && (lowerText.includes("romanian") || lowerText.includes("r&d") || /for r/i.test(lowerText))) return;
+                    if (matchFound) {
+                        // Validări extra pentru skill-uri ambigue
+                        if (s === 'Go') {
+                            // "Go" trebuie să apară explicit ca skill, nu în "GitHub", "Google", "ongoing" etc.
+                            // Verificăm că apare ca skill în secțiunea de skills sau ca limbaj de programare
+                            const goReg = /(?:^|[\s,;:|])(Go)(?=$|[\s,;:|.])/gm;
+                            goReg.lastIndex = 0;
+                            if (!goReg.test(rawText)) return;
+                            if (/ongoing|go to|go back|Google|GitHub/i.test(rawText.replace(/\bGo\b(?=[\s,;:])/g, ''))) {
+                                // dacă "Go" apare strict ca skill izolat în text, îl păstrăm
+                                const strictGoReg = /(?:Languages|Skills|Limbaje)[^\n]*\bGo\b/i;
+                                if (!strictGoReg.test(rawText)) return;
+                            }
+                        }
+                        if (s === 'R') {
+                            if (lowerText.includes('romanian') || lowerText.includes('r&d') || /for r/i.test(lowerText)) return;
+                        }
+                        // "C" nu trebuie prins din "CSS", "C#", "C++", "CAD" etc. — sortarea pe lungime ajută,
+                        // dar verificăm că "C" apare izolat (ex: în lista de limbaje separată prin virgulă)
+                        if (s === 'C') {
+                            const cReg = /(?:^|[\s,;:|])(C)(?=$|[\s,;:|,])/gm;
+                            cReg.lastIndex = 0;
+                            if (!cReg.test(rawText)) return;
                         }
 
                         let cvScore = 30;
