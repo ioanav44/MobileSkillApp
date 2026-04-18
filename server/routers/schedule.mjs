@@ -293,26 +293,26 @@ router.post('/push-token', requireAuth, async (req, res) => {
 const getMotivationalMessage = (currentStreak, frequency) => {
     if (currentStreak === 0) {
         const messages = [
-            "Azi e ziua perfectă să începi! 🚀",
-            "Primul pas e cel mai important. Hai să-l faci acum! 💪",
-            "Nu amâna pe mâine ce poți învăța azi! ⚡",
-            "Cariera ta tech te așteaptă. Fă primul pas! 🎯"
+            "Azi e ziua perfectă să începi!",
+            "Primul pas e cel mai important. Hai să-l faci acum!",
+            "Nu amâna pe mâine ce poți învăța azi!",
+            "Cariera ta tech te așteaptă. Fă primul pas!"
         ];
         return messages[Math.floor(Math.random() * messages.length)];
     }
 
-    if (currentStreak === 1) return "Bun început! Continuă mâine pentru streak de 2 zile! 🌱";
-    if (currentStreak === 2) return "2 zile! Începe să devină obicei! 🔥";
-    if (currentStreak === 3) return "3 zile la rând! Ești pe drumul cel bun! 💪";
-    if (currentStreak >= 4 && currentStreak < 7) return `${currentStreak} zile consecutive! Impresionant! 🔥`;
-    if (currentStreak === 7) return "O SĂPTĂMÂNĂ COMPLETĂ! Ești un campion! 🏆🔥";
-    if (currentStreak > 7 && currentStreak < 14) return `${currentStreak} zile! Nimic nu te oprește! 🚀`;
-    if (currentStreak === 14) return "2 SĂPTĂMÂNI! Obiceiul e format! 🎯🔥🔥";
-    if (currentStreak > 14 && currentStreak < 30) return `${currentStreak} zile de dedicare! Ești inspirațional! ✨`;
-    if (currentStreak === 30) return "O LUNĂ ÎNTREAGĂ! Ești legendar! 👑🔥🔥🔥";
-    if (currentStreak > 30) return `${currentStreak} zile!!! Nivelul tău de dedicare e EPIC! 👑✨🔥`;
+    if (currentStreak === 1) return "Bun început! Continuă mâine pentru un streak de 2 zile.";
+    if (currentStreak === 2) return "2 zile consecutive! Începe să devină obicei.";
+    if (currentStreak === 3) return "3 zile la rând — ești pe drumul cel bun!";
+    if (currentStreak >= 4 && currentStreak < 7) return `${currentStreak} zile consecutive — impresionant!`;
+    if (currentStreak === 7) return "O săptămână completă! Felicitări, ești constant.";
+    if (currentStreak > 7 && currentStreak < 14) return `${currentStreak} zile de streak — nimic nu te oprește!`;
+    if (currentStreak === 14) return "2 săptămâni! Obiceiul este deja format.";
+    if (currentStreak > 14 && currentStreak < 30) return `${currentStreak} zile de dedicare — continuă tot așa!`;
+    if (currentStreak === 30) return "O lună întreagă! Dedicarea ta este remarcabilă.";
+    if (currentStreak > 30) return `${currentStreak} zile consecutive — un nivel de dedicare excepțional!`;
 
-    return "Continuă să înveți! Fiecare zi contează! 💪";
+    return "Continuă să înveți! Fiecare zi contează.";
 };
 
 export default router;

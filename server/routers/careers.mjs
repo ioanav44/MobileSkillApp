@@ -602,15 +602,23 @@ router.post('/gap-analysis', requireAuth, async (req, res) => {
 // Salvare curs pe profilul utilizatorului
 router.post('/save-course', requireAuth, async (req, res) => {
     try {
-        const { title, platform, link } = req.body;
+        let { title, platform, link } = req.body;
         const userId = req.userId;
 
-        // Căutăm dacă avem deja acest curs sau îl creăm
-        const course = await prisma.course.upsert({
-            where: { link: link }, // Folosim linkul ca identificator unic
-            update: {},
-            create: { title, platform, link, category: 'saved' }
+        // Fallback-uri de protecție ca să nu crăpăm Prisma
+        title = title || "Resursă necunoscută";
+        platform = platform || "Online";
+        link = link || "N/A";
+
+        let course = await prisma.course.findFirst({
+            where: { link: link }
         });
+
+        if (!course) {
+            course = await prisma.course.create({
+                data: { title, platform, link, category: 'saved' }
+            });
+        }
 
         // Conectăm cursul la utilizator
         await prisma.user.update({
@@ -648,6 +656,21 @@ router.delete('/unsave-course', requireAuth, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Eroare la eliminarea cursului' });
+    }
+});
+
+// Listare cursuri salvate de utilizator
+router.get('/my-courses', requireAuth, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { savedCourses: true }
+        });
+        res.json({ courses: user?.savedCourses || [] });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Eroare la preluarea cursurilor' });
     }
 });
 

@@ -1,37 +1,41 @@
 # MobileSkillApp - Aplicație de Management al Carierei și Evaluare a Competențelor
 
-Această aplicație este dezvoltată ca parte a unei lucrări de licență și reprezintă o platformă mobilă integrată pentru gestionarea parcursului profesional, evaluarea abilităților tehnice și analiza asistată de AI a CV-urilor.
+Această aplicație este dezvoltată ca parte a unei lucrări de licență și reprezintă o platformă mobilă integrată pentru gestionarea parcursului profesional, evaluarea abilităților tehnice și orientarea profesională asistată de AI.
 
 ## 🌟 Funcționalități Principale
 
-- **Analiza CV-ului cu AI:** Utilizatorii pot încărca CV-ul în format PDF, care este procesat folosind `pdf-parse` și analizat prin **Google Gemini AI** pentru a extrage automat competențele și experiența.
+- **Analiza CV-ului:** Utilizatorii pot încărca CV-ul în format PDF, care este procesat folosind `pdfjs-dist` pentru a extrage automat competențele tehnice prin potrivire cu o bază de date de peste 80 de skill-uri.
 - **Roadmap-uri de Carieră:** Vizualizarea unor trasee de învățare structurate pentru diverse roluri tehnice (Frontend, Backend, Mobile, etc.), bazate pe date de la `roadmap.sh`.
 - **Evaluarea Competențelor:**
     - **Self-assessment:** Utilizatorii își pot evalua propriul nivel pentru diverse tehnologii.
     - **Quiz-uri Tehnice:** Teste generate pentru a valida cunoștințele utilizatorului.
-    - **Corelare Automată:** Sistemul corelează datele din CV cu cerințele din roadmap.
-- **Tendințe pe Piața Muncii:** Integrare cu **Adzuna API** (sau date simulate) pentru a oferi informații despre cererea de pe piață pentru anumite tehnologii.
+    - **Gap Analysis:** Sistemul corelează competențele utilizatorului cu cerințele unei cariere țintă și calculează procentul de potrivire.
+- **Chatbot AI:** Asistent conversațional bazat pe **Google Gemini 2.0 Flash**, cu răspunsuri personalizate pe baza profilului utilizatorului și optimizare pe 3 niveluri (predefinit → cache → API).
+- **Tendințe pe Piața Muncii:** Integrare cu **JSearch API** (RapidAPI) pentru date reale despre cererea de pe piață, salarii și creștere per domeniu IT.
+- **Sistem Gamificat de Învățare:** Program personalizat, tracking zilnic al activităților și sistem de streak motivațional.
 - **Sistem de Autentificare:** Securizat prin JWT și bcrypt pentru gestionarea profilului de utilizator.
-- **Notificări prin Email:** Suport pentru comunicări prin email folosind Nodemailer.
+- **Notificări prin Email:** E-mail de bun venit la înregistrare, trimis prin Nodemailer + SMTP Gmail.
 
 ## 🛠️ Tehnologii Utilizate
 
 ### Frontend (Client)
-- **React Native** cu **Expo** (SDK 54)
-- **TypeScript** pentru siguranța tipurilor
-- **Expo Router** pentru navigare bazată pe fișiere
-- **NativeWind (Tailwind CSS)** pentru stilizare modernă și responsivă
-- **React Navigation** (Bottom Tabs)
-- **Zod** pentru validarea datelor
+- **React Native** (v0.81) cu **Expo** (SDK 54)
+- **JavaScript (JSX)** pentru logica și interfețele componentelor
+- **Expo Router** (v6) pentru navigare bazată pe structura de fișiere
+- **React Navigation** (v7) — Stack Navigator + Bottom Tab Navigator
+- **React Context API** pentru gestionarea stării globale
+- **Zod** (v4) pentru validarea datelor
 
 ### Backend (Server)
-- **Node.js** cu **Express.js**
-- **Prisma ORM** pentru interacțiunea cu baza de date
-- **SQLite** ca bază de date locală (ușor de configurat)
-- **Google Generative AI (Gemini 1.5 Flash)** pentru procesarea limbajului natural
-- **Multer** pentru gestionarea încărcărilor de fișiere (CV-uri)
+- **Node.js** cu **Express.js** (v5)
+- **Prisma ORM** (v6.4) pentru interacțiunea cu baza de date
+- **SQLite** ca bază de date locală (fișier `dev.db`)
+- **Google Generative AI** — model **Gemini 2.0 Flash** pentru chatbot și recomandări
+- **Multer** pentru gestionarea încărcărilor de fișiere (CV-uri PDF)
+- **pdfjs-dist** (legacy build) pentru extragerea textului din documente PDF
 - **bcryptjs** și **jsonwebtoken (JWT)** pentru securitate
-- **pdf-parse** pentru extragerea textului din documente PDF
+- **Nodemailer** pentru trimiterea de e-mailuri tranzacționale
+- **JSearch API** (RapidAPI) pentru date despre piața muncii IT
 
 ## 🚀 Instalare și Configurare
 
@@ -56,6 +60,7 @@ npm install
 # GEMINI_API_KEY=cheia_ta_gemini
 # DATABASE_URL="file:./dev.db"
 # PORT=5000
+# JSEARCH_API_KEY=cheia_ta_jsearch
 
 # Inițializează baza de date Prisma
 npx prisma generate
@@ -82,13 +87,14 @@ npx expo start
 ## 📂 Structura Proiectului
 
 - `/client`: Codul sursă pentru aplicația mobilă React Native.
-    - `/app`: Rutele aplicației (Expo Router).
-    - `/components`: Componente UI reutilizabile.
-    - `/src`: Configurații, hook-uri și utilitare.
-- `/server`: API-ul Node.js.
-    - `/prisma`: Schema bazei de date.
-    - `/routers`: Rutele API-ului.
-    - `/scripts`: Scripturi de seeding și utilitare pentru AI.
+    - `/app`: Rutele aplicației (Expo Router) — Login, Register, Tabs.
+    - `/src/components`: Componente UI reutilizabile (ChatBot, Roadmap, Streak, Calendar etc.).
+    - `/src/stores`: Gestionarea stării globale (AuthContext).
+    - `/src/config`: Configurare URL server.
+- `/server`: API-ul Node.js cu Express.
+    - `/prisma`: Schema bazei de date și migrări.
+    - `/routers`: Rutele API-ului (auth, cv, careers, marketTrends, schedule).
+    - `/middleware`: Middleware de autentificare JWT.
 
 ## 📄 Licență
 Acest proiect este realizat în scop academic pentru examenul de licență.
