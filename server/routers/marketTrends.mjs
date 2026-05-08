@@ -44,7 +44,7 @@ router.get('/', async (req, res) => {
         });
 
         if (trends.length === 0) {
-            console.log("📊 DB goală — se populează automat cu date de referință...");
+            console.log("DB goală - se populează automat cu date de referință");
             await populateWithFallback();
             trends = await prisma.marketTrend.findMany({ orderBy: { jobCount: 'desc' } });
             if (JSEARCH_API_KEY) runAutoSync().catch(console.error);
@@ -52,7 +52,7 @@ router.get('/', async (req, res) => {
             const lastUpdate = trends[0].lastUpdated;
             const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
             if (lastUpdate < sevenDaysAgo && JSEARCH_API_KEY) {
-                console.log("🕒 Datele sunt vechi (> 7 zile). Pornesc sincronizarea automată în fundal...");
+                console.log("Datele sunt mai vechi de 7 zile. Se porneste sincronizarea.");
                 runAutoSync().catch(console.error);
             }
         }

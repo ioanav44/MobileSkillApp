@@ -153,7 +153,7 @@ const PREDEFINED_RESPONSES = {
     'hey': 'Hey! Sunt asistentul tău de carieră. Întreabă-mă orice legat de tehnologii, skill-uri sau parcursuri profesionale.',
     'hi': 'Hi! Cu ce te pot ajuta în legătură cu parcursul tău profesional în IT?',
     'ce faci': 'Sunt bine, mulțumesc! Sunt gata să te ajut cu orice întrebare legată de cariera ta în IT.',
-    'cine esti': 'Sunt un asistent virtual de carieră IT, integrat în aplicația MobileSkillApp. Te pot ajuta cu sfaturi personalizate despre tehnologii, parcursuri de învățare și orientare profesională.',
+    'cine esti': 'Sunt un asistent virtual de carieră IT, integrat în această aplicație. Te pot ajuta cu sfaturi personalizate despre tehnologii, parcursuri de învățare și orientare profesională.',
     
     // Întrebări generale despre carieră
     'ce limbaje sa invat': 'Depinde de direcția ta. Pentru Frontend: JavaScript/TypeScript sunt esențiale. Pentru Backend: Node.js, Python sau Java sunt foarte căutate. Pentru Mobile: Kotlin (Android) sau Swift (iOS), sau React Native/Flutter pentru cross-platform. Recomandarea mea: începe cu JavaScript, este versatil și cerut pe piață.',
@@ -193,7 +193,7 @@ const PREDEFINED_RESPONSES = {
     'freelancing': 'Pentru freelancing în IT: 1) Construiește mai întâi experiență (6-12 luni). 2) Creează un portofoliu impresionant. 3) Începe pe platforme ca Upwork, Fiverr, sau Toptal. 4) Setează-ți prețuri competitive la început. 5) Construiește relații pe termen lung cu clienții. Avantaje: flexibilitate și venituri potențial mai mari.',
     
     // Ajutor aplicație
-    'cum functioneaza aplicatia': 'MobileSkillApp te ajută în 4 pași: 1) Încarcă-ți CV-ul pentru analiză automată cu AI. 2) Alege o carieră țintă și vizualizează roadmap-ul de competențe. 3) Evaluează-ți nivelul prin self-assessment și quiz-uri tehnice. 4) Urmărește tendințele pieței IT. Eu, asistentul AI, sunt aici să te ghidez pe tot parcursul!',
+    'cum functioneaza aplicatia': 'Aplicația te ajută în 3 pași: 1) Încarcă-ți CV-ul pentru analiză automată cu AI. 2) Alege o carieră țintă și vizualizează roadmap-ul de competențe. 3) Evaluează-ți nivelul prin self-assessment și urmărește tendințele pieței IT. Eu, asistentul AI, sunt aici să te ghidez pe tot parcursul!',
     'ajutor': 'Te pot ajuta cu: 1) Informații despre tehnologii (întreabă "ce este React?"). 2) Sfaturi de carieră (întreabă "cum să găsesc un job?"). 3) Recomandări de cursuri (întreabă "ce cursuri să fac?"). 4) Ghidare pentru începători (întreabă "de unde să încep?"). 5) Informații despre salarii și piața muncii. Întreabă orice!',
     
     // Frontend
@@ -390,7 +390,7 @@ router.post('/ai-chat', requireAuth, async (req, res) => {
         // În loc de eroare, returnăm un răspuns util de fallback
         const fallbackReplies = [
             'Momentan procesez multe cereri simultan. Între timp, îți recomand să explorezi secțiunea de Roadmap pentru a vedea parcursul tău de învățare, sau să verifici secțiunea de Tendințe pentru a descoperi ce tehnologii sunt cele mai cerute pe piață.',
-            'Sunt în pauză de procesare! Până revin, poți să îți analizezi CV-ul din secțiunea de Profil sau să parcurgi quiz-urile tehnice pentru a-ți evalua cunoștințele.',
+            'Sunt în pauză de procesare! Până revin, poți să îți analizezi CV-ul din secțiunea de Profil sau să verifici roadmap-ul de carieră pentru a vedea ce abilități îți lipsesc.',
             'Procesez foarte multe cereri în acest moment. Te invit să explorezi roadmap-ul de carieră personalizat sau să verifici tendințele pieței IT din aplicație.',
         ];
         const fallbackReply = fallbackReplies[Math.floor(Math.random() * fallbackReplies.length)];
@@ -558,7 +558,8 @@ router.post('/gap-analysis', requireAuth, async (req, res) => {
                     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
                     const topMissingStr = topMissingSkills.join(', ');
                     const coursePrompt = `User needs skills for ${career.name}: [${topMissingStr}]. 
-                    Recommend 3 real courses (Udemy/Coursera). Return ONLY JSON array: [{"title": "Course Name", "platform": "Udemy", "link": "https://..."}]`;
+                    Recommend 3 EXCELLENT REAL courses (Udemy/Coursera). EXTREMELY IMPORTANT: Return direct, real URLs to specific courses (like https://www.udemy.com/course/react-the-complete-guide/). DO NOT return search query links like "?q=...".
+                    Return ONLY a JSON array: [{"title": "Exact Course Name (e.g. by Maximilian)", "platform": "Udemy", "link": "https://..."}]`;
 
                     const result = await model.generateContent(coursePrompt);
                     const aiText = result.response.text();
@@ -772,7 +773,7 @@ const commonSkillsDB = {
             { type: 'Video', label: 'Svelte Crash Course 2024 - De la zero la aplicație (Traversy)', url: 'https://www.youtube.com/watch?v=UGBJHYpHPvA' }
         ],
         premium: [
-            { platform: 'Udemy', label: 'Svelte & SvelteKit: The Complete Guide', url: 'https://www.udemy.com/courses/search/?q=svelte&sort=highest-rated' },
+            { platform: 'Udemy', label: 'Svelte.js - The Complete Guide (incl. Sapper/SvelteKit)', url: 'https://www.udemy.com/course/sveltejs-the-complete-guide/' },
             { platform: 'Coursera', label: 'Modern JavaScript Frameworks - Svelte Track', url: 'https://www.coursera.org/courses?query=svelte' }
         ]
     },
@@ -792,7 +793,7 @@ const commonSkillsDB = {
             { type: 'Video', label: 'Tailwind CSS Crash Course - De la zero (Traversy Media)', url: 'https://www.youtube.com/watch?v=dFgzHOX84xQ' }
         ],
         premium: [
-            { platform: 'Udemy', label: 'Tailwind CSS: De la zero la aplicații Professional', url: 'https://www.udemy.com/courses/search/?q=tailwind+css&sort=highest-rated' },
+            { platform: 'Udemy', label: 'Tailwind CSS From Scratch | Learn By Building Projects', url: 'https://www.udemy.com/course/tailwind-from-scratch/' },
             { platform: 'Coursera', label: 'Modern CSS cu Tailwind - Curs Profesional', url: 'https://www.coursera.org/courses?query=tailwind+css' }
         ]
     },
@@ -832,7 +833,7 @@ const commonSkillsDB = {
             { type: 'Video', label: 'Jest Testing Tutorial - JavaScript Unit Testing (Traversy)', url: 'https://www.youtube.com/watch?v=7r4xVDI2vho' }
         ],
         premium: [
-            { platform: 'Udemy', label: 'Testing JavaScript cu Jest și Testing Library', url: 'https://www.udemy.com/courses/search/?q=jest+testing&sort=highest-rated' },
+            { platform: 'Udemy', label: 'React Testing Library and Jest: The Complete Guide', url: 'https://www.udemy.com/course/react-testing-library/' },
             { platform: 'Coursera', label: 'Software Testing și QA cu JavaScript', url: 'https://www.coursera.org/courses?query=javascript+testing' }
         ]
     },
@@ -842,7 +843,7 @@ const commonSkillsDB = {
             { type: 'Video', label: 'Cypress E2E Testing Tutorial complet (freeCodeCamp)', url: 'https://www.youtube.com/watch?v=u8vMu7viCm8' }
         ],
         premium: [
-            { platform: 'Udemy', label: 'Cypress Testing: E2E Automation Testing Masterclass', url: 'https://www.udemy.com/courses/search/?q=cypress+testing&sort=highest-rated' },
+            { platform: 'Udemy', label: 'Cypress: Web Automation Testing from Zero to Hero', url: 'https://www.udemy.com/course/cypress-web-automation-testing-from-zero-to-hero/' },
             { platform: 'Coursera', label: 'Test Automation cu Cypress - Curs Profesional', url: 'https://www.coursera.org/courses?query=cypress' }
         ]
     },
@@ -1092,7 +1093,7 @@ const commonSkillsDB = {
             { type: 'Video', label: 'Firebase Tutorial complet - Auth, Firestore, Storage (Net Ninja)', url: 'https://www.youtube.com/watch?v=9zdvmgGsww0' }
         ],
         premium: [
-            { platform: 'Udemy', label: 'Firebase & Firestore Fundamentals for React developers', url: 'https://www.udemy.com/courses/search/?q=firebase&sort=highest-rated' },
+            { platform: 'Udemy', label: 'Firebase & Firestore Masterclass for React Developers', url: 'https://www.udemy.com/course/firebase-firestore-react/' },
             { platform: 'Coursera', label: 'Developing Applications with Google Cloud Firebase', url: 'https://www.coursera.org/courses?query=firebase' }
         ]
     },
@@ -1142,7 +1143,7 @@ const commonSkillsDB = {
             { type: 'Video', label: 'Redux Toolkit Tutorial complet (freeCodeCamp)', url: 'https://www.youtube.com/watch?v=5yEG6GhoJBs' }
         ],
         premium: [
-            { platform: 'Udemy', label: 'React Redux Full Stack 2024 - State Management Complet', url: 'https://www.udemy.com/courses/search/?q=redux+state+management&sort=highest-rated' },
+            { platform: 'Udemy', label: 'Modern React with Redux - The Complete Bootcamp', url: 'https://www.udemy.com/course/react-redux/' },
             { platform: 'Coursera', label: 'Front-End Web Development - State Management cu React', url: 'https://www.coursera.org/courses?query=react+state+management' }
         ]
     },
@@ -1181,40 +1182,29 @@ router.get('/roadmap-item-details', requireAuth, async (req, res) => {
             });
         }
 
-        // 2. Verificăm în baza de date locală (SKILL_DESCRIPTIONS + commonSkillsDB)
+        // 2. Verificăm în baza de date locală dacă avem cursuri predefinite
+        const normalizedTitle = title.toLowerCase().trim();
+        let skillData = commonSkillsDB[normalizedTitle];
+        if (!skillData) {
+            const foundKey = Object.keys(commonSkillsDB).find(k => normalizedTitle.includes(k) || k.includes(normalizedTitle));
+            if (foundKey) skillData = commonSkillsDB[foundKey];
+        }
+
         const localDesc = SKILL_DESCRIPTIONS[title] || SKILL_DESCRIPTIONS[title.toLowerCase()];
-        if (localDesc) {
-            // Avem descriere locală - căutăm și resurse locale dacă există
-            const normalizedTitle = title.toLowerCase().trim();
-            const skillData = commonSkillsDB[normalizedTitle] ||
-                commonSkillsDB[Object.keys(commonSkillsDB).find(k => normalizedTitle.includes(k) || k.includes(normalizedTitle))];
 
-            if (skillData) {
-                console.log(`[LOCAL] Serving from local DB for: ${title}`);
-                return res.json({
-                    title,
-                    description: localDesc,
-                    freeResources: skillData.free,
-                    premiumResources: skillData.premium
-                });
-            }
-
-            // Avem descriere dar nu resurse specifice - generăm resurse dinamice cu titluri sugestive
-            const encoded = encodeURIComponent(title);
-            console.log(`[LOCAL DESC] Serving local desc + dynamic resources for: ${title}`);
+        if (skillData) {
+            console.log(`[LOCAL] Serving from local DB for: ${title}`);
             return res.json({
                 title,
-                description: localDesc,
-                freeResources: [
-                    { type: 'Video', label: `${title} - Tutorial complet de la zero (YouTube)`, url: `https://www.youtube.com/results?search_query=${encoded}+full+course+for+beginners` },
-                    { type: 'Documentație', label: `${title} - Documentație și ghid oficial`, url: `https://www.google.com/search?q=${encoded}+official+documentation` }
-                ],
-                premiumResources: [
-                    { platform: 'Udemy', label: `${title} - Cel mai bine cotat curs complet`, url: `https://www.udemy.com/courses/search/?q=${encoded}&sort=highest-rated` },
-                    { platform: 'Coursera', label: `${title} - Specializare cu Certificat Profesional`, url: `https://www.coursera.org/courses?query=${encoded}` }
-                ]
+                description: localDesc || `Informații esențiale despre ${title}.`,
+                freeResources: skillData.free,
+                premiumResources: skillData.premium
             });
         }
+
+        // Dacă nu avem skillData local, mergem către AI (chiar dacă aveam localDesc), 
+        // pentru a garanta obținerea de link-uri spre cursuri REALE, nu simple link-uri de search.
+
 
         // 3. Nu am nimic local - apelăm AI pentru skill-uri necunoscute
         console.log(`[AI] Cache miss + no local data. Generating details for: ${title} (${careerName})`);
@@ -1222,19 +1212,19 @@ router.get('/roadmap-item-details', requireAuth, async (req, res) => {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const prompt = `Ești un expert educațional IT. Oferă resurse de înaltă calitate pentru conceptul "${title}" în cadrul unei cariere de ${careerName || 'Software Developer'}.
         
-        CERINȚE:
+        CERINȚE IMPERATIVE:
         1. "description": Descriere tehnică scurtă (max 250 caractere) în Română.
-        2. "freeResources": 2-3 resurse oficiale sau de top (MDN, Web.dev, oficial docs, YouTube channels celebre).
-        3. "premiumResources": 2 cursuri plătite de prestigiu (Udemy, Coursera, Pluralsight).
+        2. "freeResources": 2 resurse oficiale sau de top (ex: MDN, freeCodeCamp, tutoriale specifice YouTube).
+        3. "premiumResources": EXTREM DE IMPORTANT: Găsește 2 cursuri REALE de prestigiu de pe Udemy sau Coursera (ex: "The Complete 2024 Web Development Bootcamp"). Returnează Link-ul direct la cursul specific (ex: https://www.udemy.com/course/numele-cursului/). NU returna link-uri de căutare precum "?q=..." sau "search/?q=".  
         
         Răspunde strict în JSON:
         {
           "title": "${title}",
           "description": "...",
           "freeResources": [{"type": "Documentation/Video", "label": "...", "url": "..."}],
-          "premiumResources": [{"label": "...", "platform": "Udemy", "url": "..."}]
+          "premiumResources": [{"label": "Numele Complet si Real al cursului (ex semnat de creator)", "platform": "Udemy/Coursera", "url": "URL-ul real specific"}]
         }
-        Resursele pot fi în Engleză.`;
+        Resursele pot fi în Engleză. Folosește titluri celebre pe care le cunoști din training-ul tău.`;
 
         const result = await model.generateContent(prompt);
         const aiText = result.response.text();
