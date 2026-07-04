@@ -4,9 +4,13 @@
   "type": "module",
   "main": "server.mjs",
   "scripts": {
-    "start": "node update_config.mjs && node server.mjs",
+    "start": "node server.mjs",
     "dev": "node update_config.mjs && nodemon server.mjs",
+    "build": "npx prisma generate && npx prisma db push",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "keywords": [],
   "author": "",
