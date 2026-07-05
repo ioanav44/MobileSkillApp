@@ -301,18 +301,18 @@ const getMotivationalMessage = (currentStreak, frequency) => {
         return messages[Math.floor(Math.random() * messages.length)];
     }
 
-    if (currentStreak === 1) return "Bun început! Continuă mâine pentru un streak de 2 zile.";
-    if (currentStreak === 2) return "2 zile consecutive! Începe să devină obicei.";
-    if (currentStreak === 3) return "3 zile la rând — ești pe drumul cel bun!";
-    if (currentStreak >= 4 && currentStreak < 7) return `${currentStreak} zile consecutive — impresionant!`;
-    if (currentStreak === 7) return "O săptămână completă! Felicitări, ești constant.";
-    if (currentStreak > 7 && currentStreak < 14) return `${currentStreak} zile de streak — nimic nu te oprește!`;
-    if (currentStreak === 14) return "2 săptămâni! Obiceiul este deja format.";
-    if (currentStreak > 14 && currentStreak < 30) return `${currentStreak} zile de dedicare — continuă tot așa!`;
-    if (currentStreak === 30) return "O lună întreagă! Dedicarea ta este remarcabilă.";
-    if (currentStreak > 30) return `${currentStreak} zile consecutive — un nivel de dedicare excepțional!`;
+    if (currentStreak === 1) return "Bun început! Continuă mâine pentru a consolida progresul de 2 zile.";
+    if (currentStreak === 2) return "2 zile consecutive de studiu! Începe să devină un obicei sănătos.";
+    if (currentStreak === 3) return "3 zile la rând de învățare — ești pe drumul cel bun spre succes!";
+    if (currentStreak >= 4 && currentStreak < 7) return `${currentStreak} zile consecutive de progres — impresionant!`;
+    if (currentStreak === 7) return "O săptămână completă de studiu! Felicitări pentru constanță.";
+    if (currentStreak > 7 && currentStreak < 14) return `${currentStreak} zile de progres continuu — nimic nu te oprește!`;
+    if (currentStreak === 14) return "2 săptămâni de învățare consecventă! Obiceiul este deja format.";
+    if (currentStreak > 14 && currentStreak < 30) return `${currentStreak} zile de dedicare și progres — continuă tot așa!`;
+    if (currentStreak === 30) return "O lună întreagă de progres constant! Dedicarea ta este remarcabilă.";
+    if (currentStreak > 30) return `${currentStreak} zile consecutive de studiu — un nivel de dedicare excepțional!`;
 
-    return "Continuă să înveți! Fiecare zi contează.";
+    return "Continuă să înveți! Fiecare zi te aduce mai aproape de jobul ideal.";
 };
 
 export default router;
