@@ -59,11 +59,11 @@ export default function AiBotModal({ visible, onClose }) {
             visible={visible}
             onRequestClose={onClose}
         >
-            <View style={styles.modalOverlay}>
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                    style={styles.modalContainer}
-                >
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={styles.modalOverlay}
+            >
+                <View style={styles.modalContainer}>
                     <View style={styles.header}>
                         <View style={styles.headerInfo}>
                             <View style={styles.botIcon}>
@@ -112,6 +112,7 @@ export default function AiBotModal({ visible, onClose }) {
                         <TextInput
                             style={styles.input}
                             placeholder="Scrie o întrebare..."
+                            placeholderTextColor="#9ca3af"
                             value={chatInput}
                             onChangeText={setChatInput}
                             multiline
@@ -124,8 +125,8 @@ export default function AiBotModal({ visible, onClose }) {
                             <Ionicons name="send" size={20} color="white" />
                         </TouchableOpacity>
                     </View>
-                </KeyboardAvoidingView>
-            </View>
+                </View>
+            </KeyboardAvoidingView>
         </Modal>
     );
 }

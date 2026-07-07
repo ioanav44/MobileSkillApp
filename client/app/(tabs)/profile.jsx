@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, ActivityIndicator, Image, TextInput, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, ActivityIndicator, Image, TextInput, Linking, KeyboardAvoidingView, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../src/stores/useAuth';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -699,7 +699,10 @@ export default function ProfileScreen() {
                 animationType="slide"
                 onRequestClose={() => setProfileModalVisible(false)}
             >
-                <View style={styles.modalOverlay}>
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    style={styles.modalOverlay}
+                >
                     <View style={[styles.modalContent, { maxHeight: '85%', paddingBottom: 20 }]}>
                         <TouchableOpacity 
                             style={styles.closeHeaderBtn} 
@@ -727,6 +730,7 @@ export default function ProfileScreen() {
                                             value={editFirstName}
                                             onChangeText={setEditFirstName}
                                             placeholder="Prenume"
+                                            placeholderTextColor="#94a3b8"
                                         />
                                     </View>
                                 </View>
@@ -740,6 +744,7 @@ export default function ProfileScreen() {
                                             value={editLastName}
                                             onChangeText={setEditLastName}
                                             placeholder="Nume"
+                                            placeholderTextColor="#94a3b8"
                                         />
                                     </View>
                                 </View>
@@ -755,6 +760,7 @@ export default function ProfileScreen() {
                                             keyboardType="email-address"
                                             autoCapitalize="none"
                                             placeholder="email@exemplu.com"
+                                            placeholderTextColor="#94a3b8"
                                         />
                                     </View>
                                 </View>
@@ -769,6 +775,7 @@ export default function ProfileScreen() {
                                             onChangeText={setCurrentPassword}
                                             secureTextEntry={!showCurrentPassword}
                                             placeholder="Parola ta actuală"
+                                            placeholderTextColor="#94a3b8"
                                         />
                                         <TouchableOpacity onPress={() => setShowCurrentPassword(!showCurrentPassword)} style={styles.eyeBtn}>
                                             <Ionicons name={showCurrentPassword ? "eye-off-outline" : "eye-outline"} size={18} color="#94a3b8" />
@@ -786,6 +793,7 @@ export default function ProfileScreen() {
                                             onChangeText={setNewPassword}
                                             secureTextEntry={!showNewPassword}
                                             placeholder="Minim 6 caractere"
+                                            placeholderTextColor="#94a3b8"
                                         />
                                         <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)} style={styles.eyeBtn}>
                                             <Ionicons name={showNewPassword ? "eye-off-outline" : "eye-outline"} size={18} color="#94a3b8" />
@@ -817,7 +825,7 @@ export default function ProfileScreen() {
                             </TouchableOpacity>
                         </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
 
             <CustomAlert 
