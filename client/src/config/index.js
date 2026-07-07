@@ -1,1 +1,1 @@
-export const API_URL = 'https://mobileskillapp-api.onrender.com';
+export const API_URL = 'https://careermentor-fdqd.onrender.com';
